@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Branching Teaching Demo</title>
+
+<style>
+body {
+    font-family: Consolas, monospace;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.layout {
+    display: flex;
+    gap: 20px;
+}
+
+.panel {
+    flex: 1;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+}
+
+.terminal {
+    background: #000;
+    color: #00ff00;
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.graph {
+    position: relative;
+    height: 300px;
+    border-left: 3px solid #444;
+    margin-left: 40px;
+}
+
+.commit {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    background: #4caf50;
+    border-radius: 50%;
+    margin: 20px 0;
+    left: -8px;
+}
+
+.branch-line {
+    position: absolute;
+    width: 3px;
+    background: #2196f3;
+}
+
+.feature-commit {
+    background: #2196f3;
+}
+
+.buttons {
+    margin-top: 15px;
+    text-align: center;
+}
+
+button {
+    padding: 8px 14px;
+    margin: 5px;
+    border: none;
+    border-radius: 6px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #555;
+}
+
+.notes {
+    background: #fff8dc;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-family: Arial;
+    font-size: 14px;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+</head>
+<body>
+
+<h1>Git Branching & Workflow Teaching Demo</h1>
+
+<div class="layout">
+
+    <!-- TERMINAL -->
+    <div class="panel">
+        <h3>Terminal</h3>
+        <div id="terminal" class="terminal"></div>
+        <div class="buttons">
+            <button onclick="clone()">Clone</button>
+            <button onclick="commitMain()">Commit</button>
+            <button onclick="createBranch()">Create Branch</button>
+            <button onclick="commitFeature()">Feature Commit</button>
+            <button onclick="merge()">Merge</button>
+            <button onclick="push()">Push</button>
+            <button onclick="toggleNotes()">Toggle Instructor Notes</button>
+        </div>
+    </div>
+
+    <!-- GRAPH -->
+    <div class="panel">
+        <h3>Branch Graph</h3>
+        <div id="graph" class="graph"></div>
+        <div id="notes" class="notes hidden"></div>
+    </div>
+
+</div>
+
+<script>
+let terminal = document.getElementById("terminal");
+let graph = document.getElementById("graph");
+let notes = document.getElementById("notes");
+
+let mainY = 0;
+let featureY = 0;
+let featureActive = false;
+
+function typeCommand(text, callback) {
+    let i = 0;
+    terminal.innerHTML += "$ ";
+    let interval = setInterval(() => {
+        terminal.innerHTML += text[i];
+        i++;
+        if (i >= text.length) {
+            clearInterval(interval);
+            terminal.innerHTML += "<br>";
+            terminal.scrollTop = terminal.scrollHeight;
+            if(callback) callback();
+        }
+    }, 40);
+}
+
+function addCommit(isFeature=false) {
+    const c = document.createElement("div");
+    c.className = "commit";
+    if(isFeature) {
+        c.classList.add("feature-commit");
+        c.style.left = "60px";
+        c.style.top = featureY + "px";
+        featureY += 40;
+    } else {
+        c.style.top = mainY + "px";
+        mainY += 40;
+    }
+    graph.appendChild(c);
+}
+
+function clone() {
+    typeCommand("git clone https://github.com/user/repo.git");
+    showNote("CLONE: First-time full repository copy including history, branches and remote tracking.");
+}
+
+function commitMain() {
+    typeCommand("git commit -m \"Main update\"");
+    addCommit(false);
+    showNote("COMMIT: Creates snapshot in local repository. Only affects local main branch.");
+}
+
+function createBranch() {
+    typeCommand("git checkout -b feature");
+    featureActive = true;
+    featureY = mainY - 40;
+    showNote("BRANCH: Creates new branch pointer from current commit. Branches are lightweight pointers.");
+}
+
+function commitFeature() {
+    if(!featureActive) return;
+    typeCommand("git commit -m \"Feature work\"");
+    addCommit(true);
+    showNote("FEATURE COMMIT: Work continues independently on feature branch.");
+}
+
+function merge() {
+    typeCommand("git merge feature");
+    addCommit(false);
+    showNote("MERGE: Combines feature branch into main. If no conflicts → fast-forward or merge commit.");
+}
+
+function push() {
+    typeCommand("git push origin main");
+    showNote("PUSH: Uploads local commits to remote repository (GitHub).");
+}
+
+function showNote(text) {
+    notes.innerHTML = "<strong>Instructor Note:</strong><br>" + text;
+}
+
+function toggleNotes() {
+    notes.classList.toggle("hidden");
+}
+</script>
+
+</body>
+</html>
